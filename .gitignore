@@ -1,0 +1,14 @@
+﻿# Third-party skills (installed locally, see README)
+.claude/skills/
+.taste-skill/
+
+# Raw card dumps (regenerate with tools/fetch_cards.py)
+tools/cards_raw.json
+
+# Node / Vercel
+node_modules/
+.vercel/
+
+# OS
+.DS_Store
+Thumbs.db
