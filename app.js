@@ -274,7 +274,15 @@ function search(q) {
 }
 
 /* ---------- OCR ---------- */
-const NUM_RE = /\b(ogn|ogs|sfd|unl|ven|opp|pr|jdg)\b[^a-z0-9]{0,4}0*(\d{1,3}[a-z]?)/gi;
+// the printed code, e.g. "OGN • 117/298": set prefix, number, and the set size after the slash
+let numRe = null;
+function numberRegex() {
+  if (!numRe) {
+    const px = [...new Set(state.cards.map(c => c.px)), 'ropp'].join('|');
+    numRe = new RegExp(`\\b(${px})\\b[^a-z0-9]{0,4}0*(\\d{1,3}[a-z*]?)(?:\\s*/\\s*0*(\\d{2,3}))?`, 'gi');
+  }
+  return numRe;
+}
 let ocrWorker = null;
 function loadScript(src) {
   return new Promise((ok, fail) => {
@@ -303,7 +311,7 @@ function rankByText(text) {
   const lines = text.split(/\n+/).map(norm).filter(l => l.length >= 3);
   const otoks = [...new Set(nt.split(' ').filter(t => t.length >= 3))];
   const obig = new Set(otoks.filter(t => t.length >= 4));
-  const nums = [...text.matchAll(NUM_RE)].map(m => [m[1].toLowerCase(), m[2].toLowerCase()]);
+  const nums = [...text.matchAll(numberRegex())].map(m => [m[1].toLowerCase() === 'ropp' ? 'opp' : m[1].toLowerCase(), m[2].toLowerCase(), m[3]]);
   const scored = [];
   for (const c of state.cards) {
     let s = 0;
@@ -334,7 +342,9 @@ function rankByText(text) {
       if (cov >= 0.6) s = Math.max(s, 0.5 + 0.45 * cov);
     }
     // 3. the printed set code and number
-    if (s > 0.3 && nums.some(([p, n]) => p === c.px && (n === c.num || n === c.num.replace(/[a-z]+$/, '')))) s += 0.4;
+    // Works in any language: a Chinese or Japanese card still prints its set code and number in Latin letters.
+    const total = c.id.split('-').pop();
+    if (nums.some(([p, n, t]) => p === c.px && (n === c.num || n === c.num.replace(/[a-z*]+$/, '')) && (!t || t === total.replace(/^0+/, '')))) s = s > 0.3 ? s + 0.4 : 0.75;
     if (s >= 0.6) scored.push([s, c]);
   }
   scored.sort((a, b) => b[0] - a[0] || a[1].n.length - b[1].n.length);
