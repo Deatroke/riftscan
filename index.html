@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f6f7f8">
+  <title>Riftscan · lista de cartas Riftbound para a Liga</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="bar">
+    <a class="brand" href="#scan" aria-label="Riftscan, ir para Escanear">
+      <svg class="mark" viewBox="0 0 32 32" width="28" height="28" aria-hidden="true">
+        <rect width="32" height="32" rx="7" fill="var(--accent)"/>
+        <path d="M18.5 7 12.8 16.6h6.4L13.5 25" fill="none" stroke="#fff" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+      </svg>
+      <span>Riftscan</span>
+    </a>
+    <nav class="tabs" aria-label="Seções">
+      <button type="button" data-view="scan">Escanear</button>
+      <button type="button" data-view="list">Lista <span id="tab-count" class="count" hidden></span></button>
+      <button type="button" data-view="export">Exportar</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- Escanear: qual carta é essa? -->
+    <section id="view-scan" class="view" aria-labelledby="h-scan">
+      <h1 id="h-scan">Escanear carta</h1>
+      <p class="lead">Fotografe a carta ou busque pelo nome ou pelo código impresso nela.</p>
+
+      <div class="actions">
+        <label class="btn primary">
+          Fotografar carta
+          <input id="file-camera" type="file" accept="image/*" capture="environment" hidden>
+        </label>
+        <label class="btn">
+          Escolher foto
+          <input id="file-pick" type="file" accept="image/*" hidden>
+        </label>
+        <button id="live-open" class="btn" type="button" hidden>Câmera ao vivo</button>
+      </div>
+
+      <div id="live" class="live" hidden>
+        <video id="live-video" playsinline muted></video>
+        <div class="actions">
+          <button id="live-shot" class="btn primary" type="button">Capturar e ler</button>
+          <button id="live-close" class="btn" type="button">Fechar câmera</button>
+        </div>
+      </div>
+
+      <div id="ocr" class="ocr" role="status" aria-live="polite" hidden>
+        <img id="ocr-preview" alt="Foto enviada" width="64">
+        <div>
+          <p id="ocr-text" class="ocr-text"></p>
+          <progress id="ocr-bar" max="1" value="0" hidden></progress>
+        </div>
+      </div>
+
+      <form id="search-form" class="search" role="search" autocomplete="off">
+        <label for="q">Buscar por nome ou código</label>
+        <input id="q" type="search" inputmode="search" enterkeyhint="search" placeholder="Zed, Shadows ou OGN 108">
+      </form>
+
+      <div id="results-wrap" hidden>
+        <h2 id="results-title"></h2>
+        <ul id="results" class="results"></ul>
+      </div>
+
+      <details class="manual">
+        <summary>Carta que não aparece na busca</summary>
+        <form id="manual-form" class="manual-form">
+          <label>Nome da carta
+            <input name="n" required placeholder="Body Rune (Vendetta)">
+          </label>
+          <label>Sigla da edição
+            <input name="s" required maxlength="6" placeholder="ROPP" style="text-transform:uppercase">
+          </label>
+          <label>Número
+            <input name="c" required maxlength="8" placeholder="R04b-V">
+          </label>
+          <label>Raridade
+            <select name="r">
+              <option value="">—</option><option>C</option><option>U</option><option>R</option><option>E</option><option>AA</option>
+            </select>
+          </label>
+          <label>Cor
+            <select name="k">
+              <option value="">Sem cor ou várias</option>
+              <option value="B">B · Body</option><option value="C">C · Calm</option><option value="F">F · Fury</option>
+              <option value="M">M · Mind</option><option value="O">O · Order</option><option value="H">H · Chaos</option>
+            </select>
+          </label>
+          <button class="btn primary" type="submit">Adicionar à lista</button>
+        </form>
+      </details>
+    </section>
+
+    <!-- Lista: o que já está contado -->
+    <section id="view-list" class="view" aria-labelledby="h-list" hidden>
+      <h1 id="h-list">Lista</h1>
+      <div id="summary" class="summary"></div>
+      <ul id="rows" class="rows"></ul>
+      <div id="list-empty" class="empty" hidden>
+        <p>Nenhuma carta na lista ainda.</p>
+        <button class="btn primary" type="button" data-go="scan">Escanear a primeira carta</button>
+      </div>
+    </section>
+
+    <!-- Exportar: o que vai para a Liga -->
+    <section id="view-export" class="view" aria-labelledby="h-export" hidden>
+      <h1 id="h-export">Exportar para a Liga</h1>
+      <p class="lead">Os preços aparecem só aqui no app e nunca vão nos arquivos.</p>
+
+      <div class="panel">
+        <h2>CSV no formato da Liga</h2>
+        <p id="csv-meta" class="meta"></p>
+        <div class="actions">
+          <button id="csv-download" class="btn primary" type="button">Baixar CSV</button>
+          <button id="csv-copy" class="btn" type="button">Copiar CSV</button>
+        </div>
+        <pre id="csv-preview" class="preview" tabindex="0"></pre>
+      </div>
+
+      <div class="panel">
+        <h2>Só os nomes</h2>
+        <label class="field">Como a quantidade aparece
+          <select id="names-mode">
+            <option value="repeat">Um nome por linha, repetido pela quantidade</option>
+            <option value="prefix">Quantidade antes do nome (3 Abandon)</option>
+            <option value="once">Cada nome uma vez, sem quantidade</option>
+          </select>
+        </label>
+        <div class="actions">
+          <button id="names-copy" class="btn primary" type="button">Copiar nomes</button>
+          <button id="names-download" class="btn" type="button">Baixar .txt</button>
+        </div>
+        <pre id="names-preview" class="preview" tabindex="0"></pre>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  <script src="app.js"></script>
+</body>
+</html>
