@@ -1,0 +1,82 @@
+# Builds the Android APK and attaches it to a GitHub Release.
+# Run it by pushing a tag:   git tag v0.2.0 && git push origin v0.2.0
+# The APK is signed with the key kept in the repository secrets (ANDROID_KEYSTORE_B64 and ANDROID_KEYSTORE_PASSWORD).
+# Always the same key: that is what lets a new APK install over the old one without losing the data saved on the phone.
+name: Android build
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - run: npm ci
+
+      - name: Tests
+        run: npm test
+
+      - name: Build the web app and sync it into the Android project
+        run: npm run sync
+
+      - name: Decode the signing key
+        env:
+          ANDROID_KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+        run: |
+          test -n "$ANDROID_KEYSTORE_B64" || { echo "ANDROID_KEYSTORE_B64 secret is missing"; exit 1; }
+          echo "$ANDROID_KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/riftscan-release.p12"
+
+      - name: Build the signed APK
+        working-directory: android
+        env:
+          RIFTSCAN_KEYSTORE: ${{ runner.temp }}/riftscan-release.p12
+          RIFTSCAN_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          RIFTSCAN_KEY_ALIAS: riftscan
+          RIFTSCAN_VERSION_CODE: ${{ github.run_number }}
+        run: |
+          export RIFTSCAN_VERSION_NAME="${GITHUB_REF_NAME#v}"
+          ./gradlew --no-daemon assembleRelease
+
+      - name: Name and check the APK
+        run: |
+          apk=android/app/build/outputs/apk/release/app-release.apk
+          test -f "$apk" || { echo "signed APK not found"; ls -R android/app/build/outputs || true; exit 1; }
+          cp "$apk" "riftscan-${GITHUB_REF_NAME}.apk"
+          sha256sum "riftscan-${GITHUB_REF_NAME}.apk" | tee "riftscan-${GITHUB_REF_NAME}.apk.sha256"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: riftscan-apk
+          path: riftscan-*.apk*
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" riftscan-*.apk riftscan-*.apk.sha256 --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" riftscan-*.apk riftscan-*.apk.sha256 \
+              --title "Riftscan ${GITHUB_REF_NAME#v}" \
+              --notes "APK assinado para instalar no Android (Configurações > permitir instalar apps desta fonte). Os dados ficam só no aparelho. Para atualizar, instale por cima: a assinatura é a mesma e as coleções são mantidas."
+          fi

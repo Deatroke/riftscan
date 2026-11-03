@@ -1,0 +1,8 @@
+{
+  "appId": "app.riftscan",
+  "appName": "Riftscan",
+  "webDir": "www",
+  "plugins": {
+    "CapacitorHttp": { "enabled": true }
+  }
+}
