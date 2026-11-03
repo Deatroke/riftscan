@@ -1118,5 +1118,7 @@ async function init() {
   renderList();
   // the native app bundles its files, so it needs no service worker
   if ('serviceWorker' in navigator && window.isSecureContext && !isNative) navigator.serviceWorker.register('sw.js').catch(() => {});
+  // the collections live in this browser's storage: ask it not to evict them when the device runs low on space
+  if (!isNative && navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
 }
 init();

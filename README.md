@@ -2,7 +2,7 @@
 
 App (PWA e Android via Capacitor) para escanear cartas de Riftbound, montar colecoes e exportar para a LigaRiftbound (CSV) e para o MYP Cards (lista para colar).
 
-Status: em desenvolvimento. Sem login por enquanto; roda local, deploy na Vercel depois.
+Status: em desenvolvimento. Sem login por enquanto; os dados ficam no aparelho. Publicar na Vercel: `docs/publicar-web.md`.
 
 ## Decisoes
 

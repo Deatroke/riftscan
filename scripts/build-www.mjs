@@ -2,7 +2,8 @@
 import { cpSync, rmSync, mkdirSync } from 'node:fs';
 import { basename } from 'node:path';
 
-const files = ['index.html', 'styles.css', 'theme.js', 'core.js', 'myp.js', 'config.js', 'app.js', 'manifest.webmanifest'];
+// sw.js is for the web build (offline cache); the native app never registers it
+const files = ['index.html', 'styles.css', 'theme.js', 'core.js', 'myp.js', 'config.js', 'app.js', 'sw.js', 'manifest.webmanifest'];
 const dirs = ['icons', 'data', 'fonts'];
 
 rmSync('www', { recursive: true, force: true });

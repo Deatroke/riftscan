@@ -1,7 +1,7 @@
 /* Network first, cache as the offline fallback. Same-origin GETs only (OCR and exchange rate go straight to the network).
    data/myp.json is generated and optional, so it is left out of the precache (a 404 there would fail the whole install);
    the fetch handler caches it the first time it loads. */
-const CACHE = 'riftscan-v12';
+const CACHE = 'riftscan-v13';
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(['./', 'index.html', 'styles.css', 'theme.js', 'fonts/Geist-Variable.woff2', 'core.js', 'myp.js', 'config.js', 'app.js', 'manifest.webmanifest', 'data/cards.json', 'data/prices.json'])));
   self.skipWaiting();
