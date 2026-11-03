@@ -1,0 +1,53 @@
+# Daily Riftbound data update: TCGCSV publishes at ~20:00 UTC, so run after that.
+# 1) cards.json gets what is new (a new edition, new products, release dates); existing cards are never changed or removed
+# 2) prices, history and snapshots, now including those new cards
+# Scheduled workflows only run from the default branch (main), so this does nothing until it is merged and pushed there.
+# A second run later in the evening makes the job safe against a failure in the first (it is a no-op when nothing changed).
+name: Daily data
+
+on:
+  schedule:
+    - cron: '15 21 * * *'
+    - cron: '15 23 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: daily-data
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install py7zr (reads the daily archives when a day was missed)
+        run: pip install py7zr
+
+      - name: Check the data code
+        run: python -m unittest tests.test_prices tests.test_cards
+
+      - name: Add new editions and cards
+        run: python tools/build_data.py --refresh-cards
+
+      - name: Update prices, history and snapshots
+        run: python tools/update_prices.py
+
+      - name: Commit when something changed
+        run: |
+          git config user.name "riftscan-bot"
+          git config user.email "riftscan-bot@users.noreply.github.com"
+          git add data/cards.json data/prices.json data/history.json data/snapshots
+          if git diff --cached --quiet; then
+            echo "Nothing changed."
+          else
+            git commit -m "Data $(date -u +%F)"
+            git push
+          fi
