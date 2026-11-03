@@ -13,3 +13,19 @@ node_modules/
 .DS_Store
 Thumbs.db
 tools/testimg/
+
+# Capacitor
+www/
+android/app/build/
+android/.gradle/
+android/local.properties
+android/capacitor-cordova-android-plugins/
+android/app/src/main/assets/public/
+ios/App/Pods/
+
+# Secrets
+.env.local
+
+# Python venv for tools (py7zr)
+tools/.venv/
+__pycache__/
