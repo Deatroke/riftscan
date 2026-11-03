@@ -29,3 +29,6 @@ ios/App/Pods/
 # Python venv for tools (py7zr)
 tools/.venv/
 __pycache__/
+
+.vercel
+.env*
