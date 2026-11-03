@@ -8,8 +8,8 @@ android {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         // the release workflow sets these from the tag and the run number; a local build keeps 1 / 0.2.0
-        versionCode (System.getenv('RIFTSCAN_VERSION_CODE') ?: '1') as Integer
-        versionName System.getenv('RIFTSCAN_VERSION_NAME') ?: '0.2.0'
+        versionCode Integer.parseInt(System.getenv('RIFTSCAN_VERSION_CODE') ?: '1')
+        versionName(System.getenv('RIFTSCAN_VERSION_NAME') ?: '0.2.0')
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
